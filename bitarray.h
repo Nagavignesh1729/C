@@ -10,7 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <cstring>
+#include <string.h>
 #define BYTE_SIZE 8
 
 struct BitArray {
