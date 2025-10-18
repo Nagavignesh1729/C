@@ -3,8 +3,8 @@
     For now, takes a simple string and returns a hash value using a basic algorithm.
 */
 
-unsigned long simple_hash(const char *str, int seed=5381) {
-    unsigned long hash = seed;
+unsigned long simple_hash(const char *str) {
+    unsigned long hash = 5381;
     int c;
 
     while ((c = *str++)) {
