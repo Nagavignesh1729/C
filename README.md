@@ -1,7 +1,7 @@
 # C
 
-## C custom data structure implementations and other C codes
+## C custom data structure implementations / algorithms and other C codes
 
 
 1) Bloom Filter data structure
-
+2) Map-Reduce for character frequency
