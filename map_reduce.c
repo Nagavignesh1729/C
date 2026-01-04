@@ -104,46 +104,52 @@ int* reduce(struct map_args** chunks, int N) {
     return total_freq;
 }
 
-int main() {
+// map_reduce_char_frequency(file_name, number of mappers / threads) -> returns int* as a result
+int* map_reduce_char_frequency(char* file_name, int num_threads) {
     long size;
     struct map_args** chunks;
-    int N = 4;
+    int N = num_threads;
     int* result;
+    pthread_t threads[N];
 
-    char* buffer = file_contents_into_buffer("test.txt", &size);
-    
+    char* buffer = file_contents_into_buffer(file_name, &size);
+
     chunks = (struct map_args **)malloc(N * sizeof(struct map_args *));
     for (int i=0; i<N; i++) {
         chunks[i] = (struct map_args *)malloc(sizeof(struct map_args));
     }
-
-    printf("%s\n%ld\n", buffer, size);
+    
     divide_by_chunks(chunks, buffer, size, N);
 
-    for(int i=0; i<N; i++) {
-        map((void*)chunks[i]);
-        /*
-        printf("Chunk %d Freq\n", i);
-        for(int j=0; j < 256; j++) {
-            if (chunks[i]->local_freq[j] != 0) {
-                printf("%c - %d\n", (char)(j), chunks[i]->local_freq[j]);
-            }
-        }
-        */
+    /* mapping phase is parallelized*/
+    for(int i = 0; i < N; i++) {
+        pthread_create(&threads[i], NULL, map, (void*)chunks[i]);
+    }
+    
+    for(int i = 0; i < N; i++) {
+        pthread_join(threads[i], NULL);
     }
 
     result = reduce(chunks, N);
-    for(int i = 0; i < 256; i++) {
-        if (result[i] != 0) {
-            printf("%c - %d\n", (char)(i), result[i]);
-        }
-    }
-
+    
     for(int i = 0; i < N; i++) {
         free(chunks[i]);
     }
     free(chunks);
     free(buffer);
+
+    return result;
+}
+
+int main() {    
+    int* result = map_reduce_char_frequency("test.txt", 4);
+    
+    for(int i = 0; i < 256; i++) {
+        if (result[i] != 0) {
+            printf("%c - %d\n", (char)i, result[i]);
+        }
+    }
+    
     free(result);
 
     return 0;
