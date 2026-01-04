@@ -90,10 +90,25 @@ void divide_by_chunks(struct map_args** chunks, char* buffer, long size, int N) 
     }
 }
 
+int* reduce(struct map_args** chunks, int N) {
+    int* total_freq;
+
+    total_freq = (int *)calloc(256, sizeof(int));
+
+    for(int i = 0; i < N; i++) {
+        for(int j = 0; j < 256; j++) {
+            total_freq[j] += chunks[i]->local_freq[j];
+        }
+    }
+
+    return total_freq;
+}
+
 int main() {
     long size;
     struct map_args** chunks;
     int N = 4;
+    int* result;
 
     char* buffer = file_contents_into_buffer("test.txt", &size);
     
@@ -107,11 +122,20 @@ int main() {
 
     for(int i=0; i<N; i++) {
         map((void*)chunks[i]);
+        /*
         printf("Chunk %d Freq\n", i);
         for(int j=0; j < 256; j++) {
             if (chunks[i]->local_freq[j] != 0) {
                 printf("%c - %d\n", (char)(j), chunks[i]->local_freq[j]);
             }
+        }
+        */
+    }
+
+    result = reduce(chunks, N);
+    for(int i = 0; i < 256; i++) {
+        if (result[i] != 0) {
+            printf("%c - %d\n", (char)(i), result[i]);
         }
     }
 
@@ -120,6 +144,7 @@ int main() {
     }
     free(chunks);
     free(buffer);
+    free(result);
 
     return 0;
 }
