@@ -12,6 +12,7 @@ struct map_args {
     int start;
     int end;
     char* buffer;
+    int local_freq[256];
 };
 
 // arg -> address of integer pointer -> (start, end) 
@@ -20,24 +21,22 @@ void* map(void* arg) {
     int start = input->start;
     int end = input->end;
     char* buffer = input->buffer;
-
-    int freq[256] = {0};
+    int* freq = input->local_freq;
     int i;
 
-    for(i=start; i<end; i++) {
-        freq[buffer[i]]++;
+    for(i=0; i<256; i++) {
+        freq[i] = 0;
     }
 
-    for(i=0; i<256; i++) {
-        if (freq[i] != 0)
-            printf("%c - %d\n", i, freq[i]);
+    for(i=start; i<end; i++) {
+        freq[(unsigned char)buffer[i]]++;
     }
 
     return NULL;
 }
 
-int get_file_size(FILE* f) {
-    int size;
+long get_file_size(FILE* f) {
+    long size;
 
     // read file and compute size
     fseek(f, 0, SEEK_END);
@@ -47,35 +46,47 @@ int get_file_size(FILE* f) {
     return size;
 }
 
-void file_contents_into_buffer(char* file_name, char* buffer) {
+char* file_contents_into_buffer(char* file_name, long* size) {
     FILE* f = fopen(file_name, "rb");
+    char* buffer;
 
     if (f == NULL) {
         printf("Error in reading the File\n");
-        return 0;
+        return NULL;
     }
 
-    int size = get_file_size(f);
+    *size = get_file_size(f);
 
     // put the file contents into buffer
-    buffer = (char *)malloc(size + 1);
-    fread(buffer, 1, size, f);
-    buffer[size] = '\0';
+    buffer = (char *)malloc(*size + 1);
+    fread(buffer, 1, *size, f);
+    buffer[*size] = '\0';
+
+    fclose(f);
+
+    return buffer;
 }
 
 int main() {
-    char* buffer;
     long size;
-    struct map_args* chunks[4];
-    int num_threads = 4;
-    int chunk_size;
+    struct map_args* chunk;
+    char* buffer = file_contents_into_buffer("test.txt", &size);
     
-    chunk_size = size / num_threads;
+    printf("%s\n%ld\n", buffer, size);
+    chunk = (struct map_args *)malloc(sizeof(struct map_args));
+    chunk->start = 0;
+    chunk->end = size;
+    chunk->buffer = buffer;
 
-    for(int i=0; i<num_threads; i++) {
-        chunks[i] = (struct map_args *)malloc(sizeof(struct map_args));
+    map((void *)chunk);
 
+    for(int i=0; i<256; i++) {
+        if (chunk->local_freq[i] != 0) {
+            printf("%c - %d\n", (char)i, chunk->local_freq[i]);
+        }
     }
-    
+
+    free(buffer);
+
     return 0;
 }
