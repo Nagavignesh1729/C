@@ -36,50 +36,46 @@ void* map(void* arg) {
     return NULL;
 }
 
-int main() {
-    FILE* f;
-    char* buffer;
-    long size;
-    struct map_args* chunks[4];
-    pthread_t t1, t2;
+int get_file_size(FILE* f) {
+    int size;
 
-    for(int i=0; i<2; i++) {
-        chunks[i] = (struct map_args *)malloc(sizeof(struct map_args));
-    }
-    chunks[0]->start = 0;
-    chunks[0]->end = 30;
+    // read file and compute size
+    fseek(f, 0, SEEK_END);
+    size = ftell(f);
+    rewind(f);
 
-    chunks[1]->start = 30;
-    chunks[1]->end = 80;
-    
+    return size;
+}
 
-    f = fopen("test.txt", "rb");
-    
+void file_contents_into_buffer(char* file_name, char* buffer) {
+    FILE* f = fopen(file_name, "rb");
+
     if (f == NULL) {
         printf("Error in reading the File\n");
         return 0;
     }
 
-    fseek(f, 0, SEEK_END);
-    size = ftell(f);
-    rewind(f);
+    int size = get_file_size(f);
 
+    // put the file contents into buffer
     buffer = (char *)malloc(size + 1);
     fread(buffer, 1, size, f);
     buffer[size] = '\0';
+}
 
-    chunks[0]->buffer = buffer;
-    chunks[1]->buffer = buffer;
+int main() {
+    char* buffer;
+    long size;
+    struct map_args* chunks[4];
+    int num_threads = 4;
+    int chunk_size;
+    
+    chunk_size = size / num_threads;
 
-    printf("Size of test file: %ld\n", size);
+    for(int i=0; i<num_threads; i++) {
+        chunks[i] = (struct map_args *)malloc(sizeof(struct map_args));
 
-    pthread_create(&t1, NULL, map, (void *)chunks[0]);
-    pthread_create(&t2, NULL, map, (void *)chunks[1]);
-
-    pthread_join(t1, NULL);
-    pthread_join(t2, NULL);
-
-    fclose(f);
-
+    }
+    
     return 0;
 }
