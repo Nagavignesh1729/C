@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 
+
 struct map_args {
     int start;
     int end;
@@ -141,16 +142,33 @@ int* map_reduce_char_frequency(char* file_name, int num_threads) {
     return result;
 }
 
+void bench_marking(char* file_name) {
+    struct timespec start, end;
+    double elapsed_time;
+    int* result;
+
+    for(int i = 1; i < 9; i++) {
+        clock_gettime(CLOCK_MONOTONIC, &start);
+        result = map_reduce_char_frequency(file_name, i);
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        elapsed_time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+        printf("For %d threads: It took %lf seconds\n", i, elapsed_time);
+        free(result);
+    }
+}
+
+
 int main() {    
+    /*
     int* result = map_reduce_char_frequency("test.txt", 4);
-    
     for(int i = 0; i < 256; i++) {
         if (result[i] != 0) {
             printf("%c - %d\n", (char)i, result[i]);
         }
     }
-    
     free(result);
+    */
+    bench_marking("test.txt");
 
     return 0;
 }
