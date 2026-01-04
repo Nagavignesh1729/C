@@ -4,4 +4,4 @@
 
 
 1) Bloom Filter data structure
-2) Map-Reduce for character frequency
+2) Map-Reduce for character frequency   (use a large text file to see the effect of threads)
